@@ -75,7 +75,7 @@ function FairPotInner({ id }: { id: string }) {
     setPaidBy(null)
     setSplitMode('equal')
     setNote('')
-    setSelectedMembers(trip.members.map((m) => m.name))
+    setSelectedMembers(trip?.members.map((m) => m.name) ?? [])
   }
 
   const canAdd = parseFloat(amount) > 0 && !!category && !!paidBy
