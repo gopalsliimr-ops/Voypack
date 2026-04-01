@@ -1,65 +1,76 @@
-import Image from "next/image";
+import Link from 'next/link'
 
-export default function Home() {
+const features = [
+  {
+    icon: '🗺',
+    title: 'Plan',
+    description: 'Build day-by-day itineraries for every trip',
+  },
+  {
+    icon: '🔗',
+    title: 'Share',
+    description: 'Invite friends and share a live itinerary link',
+  },
+  {
+    icon: '💸',
+    title: 'Split',
+    description: 'Track expenses and see who owes what',
+  },
+]
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4">
+        <span className="font-bold text-lg text-slate-900">✈ TripSync</span>
+        <Link
+          href="/auth"
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+        >
+          Sign In →
+        </Link>
+      </header>
+
+      {/* Hero */}
+      <section className="flex-1 flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-indigo-50 to-white px-6 text-center">
+        <h1 className="text-4xl font-extrabold leading-tight tracking-tight">
+          <span className="text-indigo-600">Plan Together.</span>
+          <br />
+          <span className="text-slate-900">Travel Better.</span>
+        </h1>
+        <p className="mt-4 text-slate-500 text-base max-w-xs leading-relaxed">
+          Create trips, share itineraries, and split expenses — all in one place.
+        </p>
+        <Link
+          href="/auth"
+          className="mt-8 inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-full px-8 py-4 text-base transition-colors shadow-md shadow-indigo-200 min-h-[56px]"
+        >
+          Start Planning →
+        </Link>
+        <p className="mt-3 text-xs text-slate-400">No account needed to explore</p>
+      </section>
+
+      {/* Feature strip */}
+      <section className="px-4 py-10">
+        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
+          {features.map((feature) => (
+            <div
+              key={feature.title}
+              className="flex-none w-52 snap-start md:w-auto bg-slate-50 rounded-2xl p-5 border border-slate-100"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <span className="text-3xl">{feature.icon}</span>
+              <p className="mt-3 font-semibold text-slate-900 text-sm">{feature.title}</p>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">{feature.description}</p>
+            </div>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 text-center">
+        <p className="text-xs text-slate-400">© 2024 TripSync</p>
+      </footer>
     </div>
-  );
+  )
 }
