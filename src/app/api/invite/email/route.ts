@@ -151,10 +151,22 @@ export async function POST(request: Request) {
     )
   )
 
-  const failed = results
-    .map((r, i) => ({ email: emails[i], ok: r.status === 'fulfilled' }))
-    .filter(r => !r.ok)
-    .map(r => r.email)
+  const failed: string[] = []
+  const errors: string[] = []
 
-  return NextResponse.json({ ok: true, failed })
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      failed.push(emails[i])
+      errors.push(String(r.reason))
+    } else if (r.value.error) {
+      failed.push(emails[i])
+      errors.push(JSON.stringify(r.value.error))
+    }
+  })
+
+  if (errors.length > 0) {
+    console.error('Resend errors:', errors)
+  }
+
+  return NextResponse.json({ ok: true, failed, errors })
 }
