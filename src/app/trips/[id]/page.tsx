@@ -262,7 +262,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
       case 'expenses':
         return <ExpenseSettlement tripId={trip!.id} userId={userId} isAdmin={isAdmin} members={members} />
       case 'invite':
-        return <InviteSection tripId={trip!.id} />
+        return <InviteSection tripId={trip!.id} tripName={trip!.name} />
     }
   }
 

@@ -1,8 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   tripId: string
+  tripName?: string
 }
 
 function parseEmails(raw: string): string[] {
@@ -20,7 +22,7 @@ function WaIcon() {
   )
 }
 
-export default function InviteSection({ tripId }: Props) {
+export default function InviteSection({ tripId, tripName = 'your trip' }: Props) {
   const [inviteLink, setInviteLink] = useState('')
   const [copied, setCopied]         = useState(false)
   const [emailInput, setEmailInput] = useState('')
@@ -38,19 +40,47 @@ export default function InviteSection({ tripId }: Props) {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  function handleSendEmails() {
+  async function handleSendEmails() {
     const addresses = parseEmails(emailInput)
     if (addresses.length === 0) { setEmailError('Enter at least one email address.'); return }
     const invalid = addresses.filter(e => !isValidEmail(e))
     if (invalid.length > 0) { setEmailError(`Invalid: ${invalid.join(', ')}`); return }
     setEmailError('')
     setSending(true)
-    // Simulate send (swap for real email API when ready)
-    setTimeout(() => {
-      setEmailsSent(prev => [...new Set([...prev, ...addresses])])
+
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      const res = await fetch('/api/invite/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ emails: addresses, tripName, inviteLink }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok) {
+        setEmailError(json.error ?? 'Failed to send. Please try again.')
+        setSending(false)
+        return
+      }
+
+      if (json.failed?.length > 0) {
+        setEmailError(`Failed to send to: ${json.failed.join(', ')}`)
+      }
+
+      const sent = addresses.filter((e: string) => !json.failed?.includes(e))
+      setEmailsSent(prev => [...new Set([...prev, ...sent])])
       setEmailInput('')
-      setSending(false)
-    }, 900)
+    } catch {
+      setEmailError('Network error. Please try again.')
+    }
+
+    setSending(false)
   }
 
   const waText = encodeURIComponent(`Join my trip on Voypack: ${inviteLink}`)
