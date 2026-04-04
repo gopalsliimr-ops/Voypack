@@ -467,7 +467,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* ── MOBILE: accordion ── */}
-        <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex flex-col md:hidden" style={{ gap: 10 }}>
           {sections.map(section => {
             const st = STATUS_STYLE[section.status]
             const isOpen = expandedSection === section.id
