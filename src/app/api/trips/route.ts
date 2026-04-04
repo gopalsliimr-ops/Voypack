@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!.trim()
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim()
 
 // Direct PostgREST fetch — guarantees JWT is in Authorization header
 async function pgrest(path: string, method: string, token: string, body?: object) {
