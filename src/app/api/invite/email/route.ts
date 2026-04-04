@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!.trim()
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim()
 
@@ -139,6 +138,10 @@ export async function POST(request: Request) {
   if (!emails?.length || !tripName || !inviteLink) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
+
+  const resendKey = process.env.RESEND_API_KEY
+  if (!resendKey) return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
+  const resend = new Resend(resendKey)
 
   const results = await Promise.allSettled(
     emails.map((to: string) =>

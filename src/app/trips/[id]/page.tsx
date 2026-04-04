@@ -1,5 +1,5 @@
 'use client'
-import { use, useState, useEffect, useCallback, useRef } from 'react'
+import { use, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -65,89 +65,20 @@ function Skeleton() {
   )
 }
 
-// ── Tab bar ──────────────────────────────────────────────────────────
-function TabBar({ sections, activeSection, onSelect }: {
-  sections: Section[]
-  activeSection: SectionId
-  onSelect: (id: SectionId) => void
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  // Auto-scroll active tab into view
-  useEffect(() => {
-    const el = scrollRef.current?.querySelector(`[data-tab="${activeSection}"]`) as HTMLElement
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }, [activeSection])
-
+// ── Chevron icon ─────────────────────────────────────────────────────
+function Chevron({ open }: { open: boolean }) {
   return (
-    <div style={{
-      background: 'var(--surface)',
-      borderBottom: '1px solid var(--border)',
-      position: 'sticky',
-      top: 56,
-      zIndex: 40,
-    }}>
-      <div
-        ref={scrollRef}
-        style={{
-          display: 'flex',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          maxWidth: 768,
-          margin: '0 auto',
-          padding: '0 4px',
-        }}
-      >
-        {sections.map(section => {
-          const isActive = activeSection === section.id
-          const st = STATUS_STYLE[section.status]
-
-          return (
-            <button
-              key={section.id}
-              data-tab={section.id}
-              onClick={() => !section.locked && onSelect(section.id)}
-              disabled={section.locked}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 3,
-                padding: '12px 16px 0',
-                minWidth: 'fit-content',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: isActive ? '2.5px solid var(--coral)' : '2.5px solid transparent',
-                cursor: section.locked ? 'not-allowed' : 'pointer',
-                opacity: section.locked ? 0.4 : 1,
-                transition: 'border-color var(--dur-normal), opacity var(--dur-normal)',
-                paddingBottom: 10,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 14 }}>{section.locked ? '🔒' : section.icon}</span>
-                <span style={{
-                  fontSize: 12, fontWeight: isActive ? 700 : 500,
-                  color: isActive ? 'var(--coral)' : 'var(--text-secondary)',
-                  whiteSpace: 'nowrap',
-                  transition: 'color var(--dur-normal)',
-                }}>
-                  {section.shortLabel}
-                </span>
-              </div>
-              {/* Status dot */}
-              <div style={{
-                width: 5, height: 5, borderRadius: '50%',
-                background: st.dot,
-                marginBottom: 2,
-                transition: 'background var(--dur-normal)',
-              }} />
-            </button>
-          )
-        })}
-      </div>
-    </div>
+    <svg
+      viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      style={{
+        width: 16, height: 16, flexShrink: 0,
+        color: 'var(--text-muted)',
+        transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform var(--dur-normal) var(--ease-spring)',
+      }}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
   )
 }
 
@@ -162,8 +93,7 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [activeSection, setActiveSection] = useState<SectionId>('date')
-  const [contentKey, setContentKey] = useState(0) // triggers re-mount animation
+  const [expandedSection, setExpandedSection] = useState<SectionId | null>('date')
 
   const [dateDecided, setDateDecided] = useState(false)
   const [destDecided, setDestDecided] = useState(false)
@@ -212,9 +142,8 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => { load() }, [load])
 
-  function handleTabSelect(sectionId: SectionId) {
-    setActiveSection(sectionId)
-    setContentKey(k => k + 1)
+  function toggleSection(sectionId: SectionId) {
+    setExpandedSection(prev => prev === sectionId ? null : sectionId)
   }
 
   if (loading) return <Skeleton />
@@ -243,14 +172,12 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
     { id: 'invite',      label: 'Invite Members',         shortLabel: 'Invite',      icon: '🔗', status: 'discussing', locked: false },
   ]
 
-  const activeS = sections.find(s => s.id === activeSection)!
-  const st = STATUS_STYLE[activeS.status]
   const decidedCount = sections.filter(s => s.status === 'decided').length
   const progress = (decidedCount / sections.length) * 100
 
-  function renderContent() {
+  function renderSectionContent(sectionId: SectionId) {
     if (!userId || members.length === 0) return null
-    switch (activeSection) {
+    switch (sectionId) {
       case 'date':
         return <DateDiscussion tripId={trip!.id} userId={userId} isAdmin={isAdmin} members={members} onDecided={setDateDecided} />
       case 'destination':
@@ -352,98 +279,139 @@ export default function TripDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      {/* ── Tab strip ───────────────────────────────────────────── */}
-      <TabBar sections={sections} activeSection={activeSection} onSelect={handleTabSelect} />
+      {/* ── Accordion sections ──────────────────────────────────── */}
+      <div style={{ maxWidth: 768, margin: '0 auto', padding: '16px 16px 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sections.map(section => {
+            const st = STATUS_STYLE[section.status]
+            const isOpen = expandedSection === section.id
 
-      {/* ── Content ─────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 768, margin: '0 auto', padding: '20px 16px' }}>
+            return (
+              <div
+                key={section.id}
+                style={{
+                  background: 'var(--surface)',
+                  border: `1.5px solid ${isOpen && !section.locked ? 'var(--coral-mid)' : 'var(--border)'}`,
+                  borderRadius: 'var(--r-lg)',
+                  overflow: 'hidden',
+                  boxShadow: isOpen ? 'var(--shadow-md)' : 'var(--shadow-xs)',
+                  transition: 'border-color var(--dur-normal), box-shadow var(--dur-normal)',
+                  opacity: section.locked ? 0.6 : 1,
+                }}
+              >
+                {/* Header row */}
+                <button
+                  onClick={() => !section.locked && toggleSection(section.id)}
+                  disabled={section.locked}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '14px 16px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: section.locked ? 'not-allowed' : 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    textAlign: 'left',
+                  }}
+                >
+                  {/* Icon */}
+                  <div style={{
+                    width: 36, height: 36,
+                    borderRadius: 'var(--r-sm)',
+                    background: section.locked ? 'var(--surface-warm)' : isOpen ? 'var(--coral-light)' : 'var(--surface-warm)',
+                    border: `1px solid ${section.locked ? 'var(--border)' : isOpen ? 'var(--coral-mid)' : 'var(--border)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 16, flexShrink: 0,
+                    transition: 'background var(--dur-normal), border-color var(--dur-normal)',
+                  }}>
+                    {section.locked ? '🔒' : section.icon}
+                  </div>
 
-        {/* Section header */}
-        <div className="animate-fade-down" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <div style={{
-            width: 40, height: 40,
-            borderRadius: 'var(--r-md)',
-            background: activeS.locked ? 'var(--surface-warm)' : 'var(--coral-light)',
-            border: `1.5px solid ${activeS.locked ? 'var(--border)' : 'var(--coral-mid)'}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, flexShrink: 0,
-          }}>
-            {activeS.locked ? '🔒' : activeS.icon}
-          </div>
-          <div>
-            <h2 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--text-xl)',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2,
-            }}>
-              {activeS.label}
-            </h2>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              fontSize: 11, fontWeight: 600,
-              padding: '2px 8px', borderRadius: 'var(--r-full)',
-              background: st.badge, color: st.text,
-              marginTop: 3,
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: st.dot, display: 'inline-block' }} />
-              {st.badgeText}
-            </span>
-          </div>
+                  {/* Label + badge */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: 14, fontWeight: 600,
+                      color: section.locked ? 'var(--text-muted)' : 'var(--text-primary)',
+                      marginBottom: 3,
+                    }}>
+                      {section.label}
+                    </p>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      fontSize: 10, fontWeight: 600,
+                      padding: '2px 7px', borderRadius: 'var(--r-full)',
+                      background: st.badge, color: st.text,
+                    }}>
+                      <span style={{ width: 4, height: 4, borderRadius: '50%', background: st.dot, display: 'inline-block' }} />
+                      {st.badgeText}
+                    </span>
+                  </div>
+
+                  {/* Chevron */}
+                  {!section.locked && <Chevron open={isOpen} />}
+                </button>
+
+                {/* Expanded content */}
+                {isOpen && !section.locked && (
+                  <div
+                    className="animate-fade-down"
+                    style={{
+                      borderTop: '1px solid var(--border)',
+                      padding: '16px',
+                    }}
+                  >
+                    {renderSectionContent(section.id)}
+                  </div>
+                )}
+
+                {/* Locked explanation */}
+                {section.locked && (
+                  <div style={{
+                    borderTop: '1px solid var(--border)',
+                    padding: '12px 16px',
+                    background: 'var(--surface-warm)',
+                  }}>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+                      {section.lockReason}
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {!dateDecided && (
+                        <button
+                          onClick={() => toggleSection('date')}
+                          style={{
+                            fontSize: 11, fontWeight: 600, padding: '5px 10px',
+                            borderRadius: 'var(--r-full)',
+                            background: 'var(--surface)', border: '1px solid var(--border-strong)',
+                            color: 'var(--text-secondary)', cursor: 'pointer',
+                            fontFamily: 'var(--font-body)',
+                          }}
+                        >
+                          📅 Decide dates
+                        </button>
+                      )}
+                      {!destDecided && (
+                        <button
+                          onClick={() => toggleSection('destination')}
+                          style={{
+                            fontSize: 11, fontWeight: 600, padding: '5px 10px',
+                            borderRadius: 'var(--r-full)',
+                            background: 'var(--surface)', border: '1px solid var(--border-strong)',
+                            color: 'var(--text-secondary)', cursor: 'pointer',
+                            fontFamily: 'var(--font-body)',
+                          }}
+                        >
+                          📍 Decide destination
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
-
-        {/* Locked state */}
-        {activeS.locked ? (
-          <div className="animate-scale-in" style={{
-            background: 'var(--surface)',
-            border: '1.5px solid var(--border)',
-            borderRadius: 'var(--r-xl)',
-            padding: '48px 24px',
-            textAlign: 'center',
-            boxShadow: 'var(--shadow-sm)',
-          }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
-            <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 8 }}>
-              Section locked
-            </p>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 280, margin: '0 auto 24px' }}>
-              {activeS.lockReason}
-            </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {!dateDecided && (
-                <button
-                  onClick={() => handleTabSelect('date')}
-                  className="btn btn-secondary"
-                  style={{ fontSize: 13, minHeight: 40 }}
-                >
-                  📅 Decide dates first
-                </button>
-              )}
-              {!destDecided && (
-                <button
-                  onClick={() => handleTabSelect('destination')}
-                  className="btn btn-secondary"
-                  style={{ fontSize: 13, minHeight: 40 }}
-                >
-                  📍 Decide destination first
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Active section content */
-          <div key={contentKey} className="animate-fade-up" style={{
-            background: 'var(--surface)',
-            border: '1.5px solid var(--border)',
-            borderRadius: 'var(--r-xl)',
-            padding: '20px 16px',
-            boxShadow: 'var(--shadow-sm)',
-          }}>
-            {renderContent()}
-          </div>
-        )}
       </div>
 
       <BottomNav />
