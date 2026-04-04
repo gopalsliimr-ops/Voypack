@@ -50,7 +50,7 @@ function InviteInner({ params }: { params: Promise<{ id: string }> }) {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  function handleSendEmails() {
+  async function handleSendEmails() {
     const addresses = parseEmails(emailInput)
     if (addresses.length === 0) {
       setEmailError('Enter at least one email address.')
@@ -64,15 +64,41 @@ function InviteInner({ params }: { params: Promise<{ id: string }> }) {
     }
     setEmailError('')
     setSending(true)
-    // Simulate network delay
-    setTimeout(() => {
-      setEmailsSent(prev => {
-        const deduped = [...new Set([...prev, ...addresses])]
-        return deduped
+
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      const res = await fetch('/api/invite/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ emails: addresses, tripName, inviteLink }),
       })
+
+      const json = await res.json()
+
+      if (!res.ok) {
+        setEmailError(json.error ?? 'Failed to send. Please try again.')
+        setSending(false)
+        return
+      }
+
+      if (json.failed?.length > 0) {
+        setEmailError(`Failed to send to: ${json.failed.join(', ')}`)
+      }
+
+      const sent = addresses.filter((e: string) => !json.failed?.includes(e))
+      setEmailsSent(prev => [...new Set([...prev, ...sent])])
       setEmailInput('')
-      setSending(false)
-    }, 900)
+    } catch {
+      setEmailError('Network error. Please try again.')
+    }
+
+    setSending(false)
   }
 
   function removeEmail(addr: string) {
