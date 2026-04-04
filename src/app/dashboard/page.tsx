@@ -15,42 +15,85 @@ interface UserProfile {
   avatar_url: string | null
 }
 
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+// ── Avatar ─────────────────────────────────────────────────────────────
+function Avatar({
+  initials, color, url, size = 48,
+}: { initials: string; color: string; url?: string; size?: number }) {
+  const base: React.CSSProperties = {
+    width: size, height: size, borderRadius: '50%',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontWeight: 700, fontSize: size * 0.35, color: '#fff',
+    flexShrink: 0, overflow: 'hidden',
+    border: '2px solid rgba(255,255,255,0.25)',
+  }
+  if (url) return <img src={url} alt={initials} style={{ ...base, objectFit: 'cover' }} />
+  return (
+    <div style={{ ...base, background: color || 'var(--coral)' }}>
+      {initials}
+    </div>
+  )
+}
+
 // ── Empty state ────────────────────────────────────────────────────────
 function EmptyState({ tab }: { tab: 'my' | 'joined' }) {
   if (tab === 'my') {
     return (
-      <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '56px 24px' }}>
+      <div className="animate-fade-up" style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', textAlign: 'center', padding: '64px 24px',
+      }}>
         <div style={{
-          width: 72, height: 72, borderRadius: 'var(--r-xl)',
-          background: 'var(--coral-light)',
+          width: 80, height: 80, borderRadius: 'var(--r-xl)',
+          background: 'linear-gradient(135deg, var(--coral-light), #fff0eb)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 32, marginBottom: 20,
+          fontSize: 36, marginBottom: 20,
           border: '1.5px solid var(--coral-mid)',
+          boxShadow: '0 8px 24px rgba(255,107,74,0.12)',
         }}>
           ✈️
         </div>
-        <p style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)', marginBottom: 8 }}>No trips yet</p>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 280, lineHeight: 1.65, marginBottom: 24 }}>
+        <p style={{
+          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20,
+          color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em',
+        }}>
+          No trips yet
+        </p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 280, lineHeight: 1.65, marginBottom: 28 }}>
           Create your first trip and invite your group — Voypack handles the rest.
         </p>
         <Link href="/trips/new" className="btn btn-primary" style={{ minWidth: 200, fontSize: 14 }}>
-          Create your first trip →
+          + Create your first trip
         </Link>
       </div>
     )
   }
   return (
-    <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '56px 24px' }}>
+    <div className="animate-fade-up" style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', textAlign: 'center', padding: '64px 24px',
+    }}>
       <div style={{
-        width: 72, height: 72, borderRadius: 'var(--r-xl)',
+        width: 80, height: 80, borderRadius: 'var(--r-xl)',
         background: 'var(--surface-warm)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 32, marginBottom: 20,
+        fontSize: 36, marginBottom: 20,
         border: '1.5px solid var(--border)',
       }}>
         💌
       </div>
-      <p style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)', marginBottom: 8 }}>No invites yet</p>
+      <p style={{
+        fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20,
+        color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em',
+      }}>
+        No invites yet
+      </p>
       <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 280, lineHeight: 1.65 }}>
         When someone adds you to a trip, it will appear here.
       </p>
@@ -61,23 +104,13 @@ function EmptyState({ tab }: { tab: 'my' | 'joined' }) {
 // ── Skeleton ───────────────────────────────────────────────────────────
 function Skeleton() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', maxWidth: 448, margin: '0 auto', paddingBottom: 96 }} className="md:max-w-4xl">
-      {/* Navbar skeleton */}
-      <div style={{ height: 56, background: 'var(--surface)', borderBottom: '1px solid var(--border)' }} />
-      <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Greeting */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div className="skeleton" style={{ height: 12, width: 80, borderRadius: 'var(--r-full)' }} />
-            <div className="skeleton" style={{ height: 22, width: 140, borderRadius: 'var(--r-full)' }} />
-          </div>
-          <div className="skeleton" style={{ height: 44, width: 110, borderRadius: 'var(--r-full)' }} />
-        </div>
-        {/* Tabs */}
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Hero skeleton */}
+      <div className="skeleton" style={{ height: 180 }} />
+      <div style={{ padding: '16px 16px', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="skeleton" style={{ height: 48, borderRadius: 'var(--r-lg)' }} />
-        {/* Cards */}
         {[1, 2].map(i => (
-          <div key={i} className="skeleton" style={{ height: 180, borderRadius: 'var(--r-lg)' }} />
+          <div key={i} className="skeleton" style={{ height: 200, borderRadius: 'var(--r-lg)' }} />
         ))}
       </div>
     </div>
@@ -171,105 +204,194 @@ export default function DashboardPage() {
   if (loading) return <Skeleton />
 
   const displayedTrips = activeTab === 'my' ? myTrips : joinedTrips
-  const avatarStyle = profile?.avatar_color ?? 'bg-indigo-500'
+  const avatarColor = profile?.avatar_color ?? 'var(--coral)'
+  const greeting = getGreeting()
+  const totalTrips = myTrips.length + joinedTrips.length
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', maxWidth: 448, margin: '0 auto', paddingBottom: 96 }} className="md:max-w-4xl md:pb-6">
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', paddingBottom: 80 }}>
 
-      <Navbar
-        showAvatar
-        avatarInitials={avatarInitials}
-        avatarColor={avatarStyle}
-        avatarUrl={profile?.avatar_url ?? undefined}
-      />
+      {/* ── Desktop Navbar (hidden on mobile — we use custom hero instead) ── */}
+      <div className="hidden md:block">
+        <Navbar
+          showAvatar
+          avatarInitials={avatarInitials}
+          avatarColor={avatarColor}
+          avatarUrl={profile?.avatar_url ?? undefined}
+        />
+      </div>
 
-      <div style={{ padding: '20px 16px' }}>
+      {/* ── Hero Banner (mobile only) ── */}
+      <div className="md:hidden" style={{
+        background: 'var(--navy)',
+        backgroundImage: 'radial-gradient(ellipse 60% 80% at 90% 20%, rgba(255,107,74,0.18) 0%, transparent 70%)',
+        padding: '48px 20px 28px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Subtle dot pattern */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.04,
+          backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          pointerEvents: 'none',
+        }} />
 
-        {/* ── Greeting ── */}
-        <div className="animate-fade-up delay-0" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative' }}>
+          <div style={{ flex: 1 }}>
+            <p className="animate-fade-up delay-0" style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--coral)',
+              marginBottom: 6,
+            }}>
+              {greeting}
+            </p>
+            <h1 className="animate-fade-up delay-1" style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(2rem, 7vw, 2.5rem)',
+              fontWeight: 700,
+              color: '#fff',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.1,
+              marginBottom: 8,
+            }}>
+              {firstName}
+            </h1>
+            <p className="animate-fade-up delay-2" style={{
+              fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 400,
+            }}>
+              {totalTrips === 0
+                ? 'No trips yet — start planning!'
+                : `${myTrips.length} trip${myTrips.length !== 1 ? 's' : ''} organised${joinedTrips.length > 0 ? ` · ${joinedTrips.length} joined` : ''}`}
+            </p>
+          </div>
+
+          <Avatar
+            initials={avatarInitials}
+            color={avatarColor}
+            url={profile?.avatar_url ?? undefined}
+            size={52}
+          />
+        </div>
+      </div>
+
+      {/* ── Desktop Hero / Greeting bar ── */}
+      <div className="hidden md:block" style={{
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--surface)',
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, marginBottom: 3 }}>Welcome back</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--coral)', marginBottom: 4 }}>
+              {greeting}
+            </p>
             <h1 style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(1.25rem, 4vw, 1.5rem)',
+              fontSize: 'clamp(1.6rem, 2.5vw, 2rem)',
               fontWeight: 700,
               color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2,
+              letterSpacing: '-0.03em',
+              lineHeight: 1.15,
             }}>
-              Hey, {firstName} 👋
+              {firstName}
             </h1>
+            {totalTrips > 0 && (
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+                {myTrips.length} organised · {joinedTrips.length} joined
+              </p>
+            )}
           </div>
+
+          <Link href="/trips/new" className="btn btn-primary" style={{ fontSize: 14, padding: '0 24px', minHeight: 48, gap: 8 }}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> New Trip
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Main content ── */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px' }} className="md:px-8">
+
+        {/* ── Tabs + mobile New Trip CTA ── */}
+        <div className="animate-fade-up delay-2" style={{
+          display: 'flex', gap: 8, alignItems: 'center',
+          padding: '16px 0 4px',
+        }}>
+          {/* Tab pill group */}
+          <div style={{
+            display: 'flex', flex: 1,
+            gap: 4,
+            background: 'var(--surface-warm)',
+            padding: 4,
+            borderRadius: 'var(--r-lg)',
+            border: '1.5px solid var(--border)',
+          }}>
+            {(['my', 'joined'] as const).map(tab => {
+              const count = tab === 'my' ? myTrips.length : joinedTrips.length
+              const label = tab === 'my' ? 'My Trips' : 'Joined'
+              const isActive = activeTab === tab
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    padding: '9px 0',
+                    borderRadius: 'calc(var(--r-lg) - 4px)',
+                    fontSize: 13, fontWeight: 600,
+                    border: 'none', cursor: 'pointer',
+                    background: isActive ? 'var(--surface)' : 'transparent',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: isActive ? '0 1px 4px rgba(26,26,62,0.08), 0 1px 2px rgba(26,26,62,0.04)' : 'none',
+                    transition: 'all var(--dur-normal) var(--ease-spring)',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700,
+                      padding: '2px 7px', borderRadius: 'var(--r-full)',
+                      background: isActive ? 'var(--coral-light)' : 'var(--border)',
+                      color: isActive ? 'var(--coral-dark)' : 'var(--text-muted)',
+                      transition: 'all var(--dur-normal)',
+                    }}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Mobile New Trip CTA */}
           <Link
             href="/trips/new"
-            className="btn btn-primary"
-            style={{ fontSize: 13, padding: '0 16px', minHeight: 44, gap: 6 }}
+            className="md:hidden btn btn-primary"
+            style={{ fontSize: 13, padding: '0 14px', minHeight: 44, gap: 5, flexShrink: 0 }}
           >
-            <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> New Trip
+            <span style={{ fontSize: 16 }}>+</span> New
           </Link>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="animate-fade-up delay-1" style={{
-          display: 'flex',
-          gap: 4,
-          background: 'var(--surface-warm)',
-          padding: 4,
-          borderRadius: 'var(--r-lg)',
-          marginBottom: 20,
-          border: '1.5px solid var(--border)',
-        }}>
-          {(['my', 'joined'] as const).map(tab => {
-            const count = tab === 'my' ? myTrips.length : joinedTrips.length
-            const label = tab === 'my' ? 'My Trips' : 'Joined Trips'
-            const isActive = activeTab === tab
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  flex: 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  padding: '10px 0',
-                  borderRadius: 'calc(var(--r-lg) - 4px)',
-                  fontSize: 13, fontWeight: 600,
-                  border: 'none', cursor: 'pointer',
-                  background: isActive ? 'var(--surface)' : 'transparent',
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                  boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
-                  transition: 'all var(--dur-normal) var(--ease-spring)',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {label}
-                {count > 0 && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 700,
-                    padding: '2px 6px', borderRadius: 'var(--r-full)',
-                    background: isActive ? 'var(--coral-light)' : 'var(--border)',
-                    color: isActive ? 'var(--coral-dark)' : 'var(--text-muted)',
-                    transition: 'all var(--dur-normal)',
-                  }}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
         {/* ── Trip grid ── */}
-        {displayedTrips.length > 0 ? (
-          <div className="animate-fade-up delay-2 md:grid md:grid-cols-2 md:gap-4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {displayedTrips.map((trip, i) => (
-              <div key={trip.id} className={`animate-fade-up delay-${Math.min(i + 2, 6)}`}>
-                <DbTripCard trip={trip} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState tab={activeTab} />
-        )}
+        <div style={{ paddingTop: 12, paddingBottom: 24 }}>
+          {displayedTrips.length > 0 ? (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 16,
+            }}>
+              {displayedTrips.map((trip, i) => (
+                <div key={trip.id} className={`animate-fade-up delay-${Math.min(i + 2, 6)}`}>
+                  <DbTripCard trip={trip} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState tab={activeTab} />
+          )}
+        </div>
 
       </div>
 
