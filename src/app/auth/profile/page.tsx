@@ -1,24 +1,27 @@
 'use client'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Suspense } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 
-const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Goa', 'Jaipur']
-const AVATAR_COLORS = ['bg-indigo-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'bg-violet-500']
+const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Goa', 'Jaipur', 'Other']
+const AVATAR_COLORS = [
+  '#FF6B4A', // coral
+  '#6366f1', // indigo
+  '#10b981', // emerald
+  '#f59e0b', // amber
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+]
 
-const inputClass =
-  'w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 placeholder:text-slate-400'
-
-function ProfileSetupForm() {
+export default function ProfileSetupPage() {
   const router = useRouter()
   const supabase = createClient()
 
   const [user, setUser] = useState<User | null>(null)
   const [name, setName] = useState('')
   const [city, setCity] = useState('')
-  const [avatarColor, setAvatarColor] = useState(0)
+  const [avatarColorIdx, setAvatarColorIdx] = useState(0)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [googlePhotoUrl, setGooglePhotoUrl] = useState<string | null>(null)
@@ -27,20 +30,13 @@ function ProfileSetupForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load authenticated user and pre-fill from Google metadata
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.replace('/auth')
-        return
-      }
+      if (!user) { router.replace('/auth'); return }
       setUser(user)
       const meta = user.user_metadata
       if (meta?.full_name) setName(meta.full_name)
-      if (meta?.avatar_url) {
-        setGooglePhotoUrl(meta.avatar_url)
-        setUseGooglePhoto(true)
-      }
+      if (meta?.avatar_url) { setGooglePhotoUrl(meta.avatar_url); setUseGooglePhoto(true) }
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -50,7 +46,7 @@ function ProfileSetupForm() {
     setPhotoFile(file)
     setUseGooglePhoto(false)
     const reader = new FileReader()
-    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string)
+    reader.onload = ev => setPhotoPreview(ev.target?.result as string)
     reader.readAsDataURL(file)
   }, [])
 
@@ -61,7 +57,7 @@ function ProfileSetupForm() {
     setUseGooglePhoto(!!googlePhotoUrl)
   }
 
-  const initials = name.trim().split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'YO'
+  const initials = name.trim().split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'
   const displayPhoto = photoPreview ?? (useGooglePhoto ? googlePhotoUrl : null)
   const canFinish = name.trim().length > 0 && city.length > 0
 
@@ -72,18 +68,11 @@ function ProfileSetupForm() {
 
     let avatar_url: string | null = googlePhotoUrl ?? null
 
-    // Upload custom photo if user chose one
     if (photoFile) {
       const ext = photoFile.name.split('.').pop() ?? 'jpg'
       const path = `${user.id}/avatar.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, photoFile, { upsert: true })
-
-      if (uploadError) {
-        // Non-fatal — fall back to Google photo or color avatar
-        console.warn('Avatar upload failed:', uploadError.message)
-      } else {
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, photoFile, { upsert: true })
+      if (!uploadError) {
         const { data } = supabase.storage.from('avatars').getPublicUrl(path)
         avatar_url = data.publicUrl
       }
@@ -95,24 +84,24 @@ function ProfileSetupForm() {
       id: user.id,
       name: name.trim(),
       city,
-      avatar_color: AVATAR_COLORS[avatarColor],
+      avatar_color: AVATAR_COLORS[avatarColorIdx],
       avatar_url,
       updated_at: new Date().toISOString(),
     })
 
     if (error) {
-      setSubmitError('Failed to save your profile. Please try again.')
+      setSubmitError('Failed to save. Please try again.')
       setSubmitting(false)
       return
     }
 
-    // Handle pending invite join for new users
     const pendingTrip = localStorage.getItem('pending_trip_join')
     if (pendingTrip) {
       localStorage.removeItem('pending_trip_join')
-      await supabase
-        .from('trip_members')
-        .upsert({ trip_id: pendingTrip, user_id: user.id, role: 'member' }, { onConflict: 'trip_id,user_id' })
+      await supabase.from('trip_members').upsert(
+        { trip_id: pendingTrip, user_id: user.id, role: 'member' },
+        { onConflict: 'trip_id,user_id' }
+      )
       router.push(`/trips/${pendingTrip}`)
       return
     }
@@ -122,233 +111,312 @@ function ProfileSetupForm() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-2 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <div style={{ width: 24, height: 24, border: '2px solid var(--border)', borderTopColor: 'var(--coral)', borderRadius: '50%' }} className="animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div style={{ minHeight: '100vh', display: 'flex' }}>
 
-      {/* ── LEFT: brand (desktop) ── */}
-      <div className="hidden md:flex md:w-[45%] lg:w-1/2 bg-gradient-to-br from-indigo-700 via-indigo-600 to-purple-700 flex-col justify-center items-center px-10 py-10">
-        <div className="text-center">
-          <span className="text-6xl">✈️</span>
-          <h2 className="mt-4 text-2xl font-extrabold text-white">Almost there!</h2>
-          <p className="mt-2 text-indigo-200 text-sm max-w-xs">One quick step and you&apos;re ready to plan your first trip.</p>
+      {/* ── LEFT: brand panel ── */}
+      <div
+        className="hidden lg:flex flex-col justify-between"
+        style={{ width: '44%', background: 'var(--navy)', padding: '40px 52px', position: 'relative', overflow: 'hidden' }}
+      >
+        {/* Coral glow */}
+        <div style={{
+          position: 'absolute', top: -80, right: -80,
+          width: 360, height: 360, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,107,74,0.18) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', color: '#fff', letterSpacing: '-0.02em' }}>Voypack</span>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--coral)', display: 'inline-block' }} />
+        </div>
 
-          {/* Steps indicator */}
-          <div className="mt-8 flex items-center gap-2 justify-center">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
-                <span className="text-indigo-600 text-xs font-black">✓</span>
-              </div>
-              <span className="text-indigo-200 text-xs font-medium">Signed in</span>
+        <div style={{ position: 'relative' }}>
+          {/* Progress steps */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, color: '#fff',
+              }}>✓</div>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Signed in</span>
             </div>
-            <div className="w-8 h-px bg-indigo-400" />
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-indigo-500 ring-4 ring-indigo-300 flex items-center justify-center">
-                <span className="text-white text-xs font-black">2</span>
-              </div>
-              <span className="text-white text-xs font-semibold">Profile</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.15)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%',
+                background: 'var(--coral)',
+                boxShadow: '0 0 0 4px rgba(255,107,74,0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 700, color: '#fff',
+              }}>2</div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>Your profile</span>
             </div>
           </div>
+
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(2rem, 3vw, 2.75rem)',
+            fontWeight: 700, color: '#fff',
+            lineHeight: 1.08, letterSpacing: '-0.03em',
+            marginBottom: 16,
+          }}>
+            Almost there —<br />
+            one quick<br />
+            <em style={{ color: 'var(--coral)', fontStyle: 'italic' }}>step.</em>
+          </h2>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, maxWidth: 290 }}>
+            Your name and city help your group members know who you are and where you're travelling from.
+          </p>
         </div>
+
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', position: 'relative' }}>© 2026 Voypack · Free to plan. Always.</p>
       </div>
 
       {/* ── RIGHT: form ── */}
-      <div className="flex-1 flex flex-col bg-slate-50 md:bg-white">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
 
-        {/* Mobile top bar */}
-        <div className="md:hidden flex items-center justify-center px-4 py-4 border-b border-slate-100 bg-white">
-          <span className="font-bold text-slate-900">✈ Voypack</span>
+        {/* Top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px' }}>
+          <div className="lg:hidden" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Voypack</span>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--coral)', display: 'inline-block' }} />
+          </div>
+          <div className="hidden lg:block" />
+
+          {/* Mobile step indicator */}
+          <div className="lg:hidden" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,107,74,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--coral)' }}>✓</div>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Sign in</span>
+            </div>
+            <div style={{ width: 24, height: 1, background: 'var(--border)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>2</div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--coral)' }}>Profile</span>
+            </div>
+          </div>
         </div>
 
-        {/* Step indicator (mobile) */}
-        <div className="md:hidden flex items-center justify-center gap-2 px-6 pt-6 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">✓</span>
+        {/* Centered form */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 24px 64px' }}>
+          <div className="animate-fade-up" style={{ width: '100%', maxWidth: 400 }}>
+
+            {/* Header */}
+            <div style={{ marginBottom: 32 }}>
+              <h1 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'var(--text-2xl)',
+                fontWeight: 700, letterSpacing: '-0.02em',
+                color: 'var(--text-primary)', marginBottom: 8,
+              }}>
+                Set up your profile
+              </h1>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Your group members will see this when you join a trip.
+              </p>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">Sign in</span>
-          </div>
-          <div className="w-8 h-px bg-indigo-200" />
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-indigo-600 ring-4 ring-indigo-100 flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">2</span>
-            </div>
-            <span className="text-[11px] text-indigo-600 font-semibold">Profile</span>
-          </div>
-        </div>
 
-        <div className="flex-1 flex items-start justify-center px-6 py-8">
-          <div className="w-full max-w-sm">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 md:shadow-none md:border-none md:p-0">
-
-              <h2 className="text-2xl font-extrabold text-slate-900 mb-1">Set up your profile</h2>
-              <p className="text-sm text-slate-500 mb-6">Quick setup before your first trip.</p>
-
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-
-              {/* ── Mobile: compact avatar row ── */}
-              <div className="flex items-center gap-4 mb-6 md:hidden">
-                <div className="relative flex-shrink-0">
-                  {displayPhoto ? (
-                    <img src={displayPhoto} alt="Profile" className="w-16 h-16 rounded-full object-cover ring-2 ring-indigo-200" />
-                  ) : (
-                    <div className={`w-16 h-16 rounded-full ${AVATAR_COLORS[avatarColor]} flex items-center justify-center text-white text-xl font-bold`}>
-                      {initials}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-7 h-7 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-md text-sm"
-                  >
-                    📷
-                  </button>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {displayPhoto ? 'Looking good!' : 'Add a photo'}
-                  </p>
-                  {photoPreview ? (
-                    <div className="flex gap-3 mt-1">
-                      <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs font-semibold text-indigo-600">Change</button>
-                      <button type="button" onClick={clearCustomPhoto} className="text-xs text-rose-400">Remove</button>
-                    </div>
-                  ) : googlePhotoUrl ? (
-                    <div className="flex gap-3 mt-1">
-                      <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs font-semibold text-indigo-600">Upload different</button>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-[11px] text-slate-400 mt-0.5 mb-1.5">or pick a colour</p>
-                      <div className="flex gap-1.5">
-                        {AVATAR_COLORS.map((color, i) => (
-                          <button key={i} onClick={() => setAvatarColor(i)}
-                            className={`w-6 h-6 rounded-full ${color} transition-all ${avatarColor === i ? 'ring-2 ring-offset-1 ring-indigo-600 scale-110' : ''}`} />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
+            {/* Avatar picker */}
+            <div style={{
+              background: 'var(--surface)',
+              border: '1.5px solid var(--border)',
+              borderRadius: 'var(--r-xl)',
+              padding: '20px',
+              marginBottom: 20,
+              display: 'flex', alignItems: 'center', gap: 16,
+            }}>
+              {/* Avatar preview */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                {displayPhoto ? (
+                  <img src={displayPhoto} alt="Profile" style={{ width: 68, height: 68, borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--coral-mid)' }} />
+                ) : (
+                  <div style={{
+                    width: 68, height: 68, borderRadius: '50%',
+                    background: AVATAR_COLORS[avatarColorIdx],
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22, fontWeight: 700, color: '#fff',
+                    transition: 'background 0.2s',
+                  }}>
+                    {initials}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    position: 'absolute', bottom: -2, right: -2,
+                    width: 26, height: 26, borderRadius: '50%',
+                    background: 'var(--navy)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, border: '2px solid var(--bg)',
+                    cursor: 'pointer',
+                  }}
+                  title="Upload photo"
+                >
+                  📷
+                </button>
               </div>
 
-              {/* ── Desktop: side-by-side ── */}
-              <div className="md:flex md:items-start md:gap-6">
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                  {displayPhoto ? (googlePhotoUrl && useGooglePhoto && !photoPreview ? 'Google photo' : 'Custom photo') : 'Pick a colour'}
+                </p>
 
-                {/* Fields */}
-                <div className="flex-1 space-y-3">
-                  {submitError && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
-                      <p className="text-sm text-rose-700">{submitError}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Your name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Gopal Singh"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className={inputClass}
-                      autoFocus
-                    />
-                    {name.trim() && (
-                      <p className="text-[11px] text-slate-400 mt-1 ml-1">
-                        Members will see you as <strong className="text-slate-600">{name.trim().split(' ')[0]}</strong>
-                      </p>
-                    )}
+                {!displayPhoto && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {AVATAR_COLORS.map((color, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setAvatarColorIdx(i)}
+                        style={{
+                          width: 26, height: 26, borderRadius: '50%',
+                          background: color, border: 'none', cursor: 'pointer',
+                          outline: avatarColorIdx === i ? `3px solid ${color}` : 'none',
+                          outlineOffset: 2,
+                          transform: avatarColorIdx === i ? 'scale(1.15)' : 'scale(1)',
+                          transition: 'transform 0.15s, outline 0.15s',
+                        }}
+                      />
+                    ))}
                   </div>
+                )}
 
-                  <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Your city</label>
-                    <select value={city} onChange={(e) => setCity(e.target.value)} className={`${inputClass} cursor-pointer`}>
-                      <option value="">Select your city…</option>
-                      {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!canFinish || submitting}
-                    className={`w-full font-bold rounded-xl py-3.5 text-sm min-h-[52px] transition-all mt-2 flex items-center justify-center gap-2 ${
-                      canFinish && !submitting
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {submitting ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Saving…</span>
-                      </>
-                    ) : (
-                      "Let's go →"
-                    )}
+                <div style={{ display: 'flex', gap: 10, marginTop: displayPhoto ? 0 : 8 }}>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} style={{
+                    fontSize: 12, fontWeight: 600, color: 'var(--coral)',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  }}>
+                    {photoPreview ? 'Change photo' : 'Upload photo'}
                   </button>
-
-                  <p className="text-xs text-slate-400 text-center">You can update your profile anytime from settings.</p>
-                </div>
-
-                {/* Photo panel — desktop only */}
-                <div className="hidden md:flex flex-col items-center gap-3 flex-shrink-0 w-36">
-                  <div className="relative">
-                    {displayPhoto ? (
-                      <img src={displayPhoto} alt="Profile" className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-100 shadow-md" />
-                    ) : (
-                      <div className={`w-24 h-24 rounded-full ${AVATAR_COLORS[avatarColor]} flex items-center justify-center text-white text-3xl font-bold shadow-md transition-colors`}>
-                        {initials}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2.5 rounded-xl transition-colors shadow-sm"
-                  >
-                    <span>📷</span>
-                    <span>{photoPreview ? 'Change photo' : googlePhotoUrl ? 'Upload different' : 'Add photo'}</span>
-                  </button>
-
-                  {/* Show Google photo source label */}
-                  {googlePhotoUrl && useGooglePhoto && !photoPreview && (
-                    <p className="text-[10px] text-slate-400 text-center">From your Google account</p>
-                  )}
-
-                  {/* Color swatches — only when no photo */}
-                  {!displayPhoto && (
-                    <>
-                      <p className="text-[10px] text-slate-400">or pick a colour</p>
-                      <div className="flex gap-1.5 flex-wrap justify-center">
-                        {AVATAR_COLORS.map((color, i) => (
-                          <button key={i} onClick={() => setAvatarColor(i)}
-                            className={`w-6 h-6 rounded-full ${color} transition-all ${avatarColor === i ? 'ring-2 ring-offset-1 ring-indigo-600 scale-110' : 'hover:scale-105'}`} />
-                        ))}
-                      </div>
-                    </>
-                  )}
-
                   {photoPreview && (
-                    <button type="button" onClick={clearCustomPhoto} className="text-[11px] text-rose-400 hover:text-rose-600 transition-colors">
-                      {googlePhotoUrl ? 'Use Google photo' : 'Remove photo'}
+                    <button type="button" onClick={clearCustomPhoto} style={{
+                      fontSize: 12, color: 'var(--text-muted)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    }}>
+                      Remove
                     </button>
                   )}
                 </div>
               </div>
-
             </div>
+
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
+
+            {/* Name field */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+                Your name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Priya Sharma"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%', border: '1.5px solid var(--border-strong)',
+                  borderRadius: 'var(--r-lg)', padding: '12px 14px',
+                  fontSize: 14, fontFamily: 'var(--font-body)',
+                  color: 'var(--text-primary)', background: 'var(--surface)',
+                  outline: 'none', boxSizing: 'border-box',
+                  transition: 'border-color var(--dur-fast)',
+                }}
+                onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'var(--coral)'}
+                onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'var(--border-strong)'}
+              />
+              {name.trim() && (
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                  Your group will see you as <strong style={{ color: 'var(--text-primary)' }}>{name.trim().split(' ')[0]}</strong>
+                </p>
+              )}
+            </div>
+
+            {/* City field */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+                Your city
+              </label>
+              <select
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                style={{
+                  width: '100%', border: '1.5px solid var(--border-strong)',
+                  borderRadius: 'var(--r-lg)', padding: '12px 14px',
+                  fontSize: 14, fontFamily: 'var(--font-body)',
+                  color: city ? 'var(--text-primary)' : 'var(--text-muted)',
+                  background: 'var(--surface)', outline: 'none',
+                  cursor: 'pointer', boxSizing: 'border-box',
+                  transition: 'border-color var(--dur-fast)',
+                  appearance: 'auto',
+                }}
+                onFocus={e => (e.target as HTMLSelectElement).style.borderColor = 'var(--coral)'}
+                onBlur={e => (e.target as HTMLSelectElement).style.borderColor = 'var(--border-strong)'}
+              >
+                <option value="">Select your city…</option>
+                {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            {/* Error */}
+            {submitError && (
+              <div style={{
+                marginBottom: 16, background: '#FFF1F2', border: '1.5px solid #FECDD3',
+                borderRadius: 'var(--r-md)', padding: '12px 16px',
+                display: 'flex', alignItems: 'flex-start', gap: 8,
+              }}>
+                <span style={{ color: '#f43f5e', flexShrink: 0 }}>⚠</span>
+                <p style={{ fontSize: 13, color: '#9f1239' }}>{submitError}</p>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              onClick={handleSubmit}
+              disabled={!canFinish || submitting}
+              style={{
+                width: '100%', minHeight: 54,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                background: canFinish && !submitting ? 'var(--coral)' : 'var(--surface-warm)',
+                color: canFinish && !submitting ? '#fff' : 'var(--text-muted)',
+                border: 'none', borderRadius: 'var(--r-full)',
+                fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-body)',
+                cursor: canFinish && !submitting ? 'pointer' : 'not-allowed',
+                boxShadow: canFinish && !submitting ? 'var(--shadow-coral)' : 'none',
+                transition: 'all var(--dur-normal) var(--ease-spring)',
+              }}
+              onMouseEnter={e => {
+                if (canFinish && !submitting) (e.currentTarget as HTMLButtonElement).style.background = 'var(--coral-dark)'
+              }}
+              onMouseLeave={e => {
+                if (canFinish && !submitting) (e.currentTarget as HTMLButtonElement).style.background = 'var(--coral)'
+              }}
+            >
+              {submitting ? (
+                <>
+                  <span style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }} className="animate-spin" />
+                  <span>Saving…</span>
+                </>
+              ) : (
+                "Let's go →"
+              )}
+            </button>
+
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>
+              You can update your profile anytime from settings.
+            </p>
+
           </div>
         </div>
       </div>
     </div>
   )
-}
-
-export default function ProfileSetupPage() {
-  return <ProfileSetupForm />
 }
