@@ -1,4 +1,4 @@
-# TripSync — Project Notes
+# Voypack — Project Notes
 
 ## What
 Mobile-first web platform for end-to-end trip planning, itinerary sharing, and travel expense sync.

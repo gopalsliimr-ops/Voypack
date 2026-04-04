@@ -73,7 +73,7 @@ function LandTogetherInner({ params }: { params: Promise<{ id: string }> }) {
 
   if (!trip || !trip.landTogether) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto flex flex-col items-center justify-center px-6 text-center">
         <p className="text-5xl mb-4">✈️</p>
         <p className="font-semibold text-slate-900 text-lg">LandTogether not available</p>
         <Link href="/dashboard" className="mt-4 text-indigo-600 text-sm">
@@ -91,7 +91,7 @@ function LandTogetherInner({ params }: { params: Promise<{ id: string }> }) {
   // ----------------------------------------------------------------
   if (view === 'organiser') {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto">
         <Navbar backHref={`/trips/${id}/planning`} title="LandTogether" />
 
         <div className="px-4 py-6">

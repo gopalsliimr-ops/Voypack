@@ -402,8 +402,8 @@ export const TRIPS: Trip[] = [
     timeframe: 'June 2024',
     groupSize: 3,
     members: [
-      { id: 'b1', name: 'Gopal', email: 'gopal@example.com', role: 'Owner', initials: 'G', color: 'bg-indigo-500' },
-      { id: 'b2', name: 'Priya', email: 'priya@example.com', role: 'Member', initials: 'P', color: 'bg-pink-500' },
+      { id: 'b1', name: 'Priya', email: 'priya@example.com', role: 'Owner', initials: 'P', color: 'bg-pink-500' },
+      { id: 'b2', name: 'Gopal', email: 'gopal@example.com', role: 'Member', initials: 'G', color: 'bg-indigo-500' },
       { id: 'b3', name: 'Arjun', email: 'arjun@example.com', role: 'Member', initials: 'A', color: 'bg-emerald-500' },
     ],
     itinerary: [
@@ -498,8 +498,8 @@ export const TRIPS: Trip[] = [
     timeframe: 'September 2023',
     groupSize: 2,
     members: [
-      { id: 'p1', name: 'Gopal', email: 'gopal@example.com', role: 'Owner', initials: 'G', color: 'bg-indigo-500' },
-      { id: 'p2', name: 'Sara', email: 'sara@example.com', role: 'Member', initials: 'S', color: 'bg-rose-500' },
+      { id: 'p1', name: 'Sara', email: 'sara@example.com', role: 'Owner', initials: 'S', color: 'bg-rose-500' },
+      { id: 'p2', name: 'Gopal', email: 'gopal@example.com', role: 'Member', initials: 'G', color: 'bg-indigo-500' },
     ],
     itinerary: [
       {

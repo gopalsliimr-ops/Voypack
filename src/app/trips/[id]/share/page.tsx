@@ -8,7 +8,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
 
   if (!trip) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-center px-6">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto flex flex-col items-center justify-center text-center px-6">
         <p className="text-6xl mb-4">✈️</p>
         <p className="font-semibold text-slate-900 text-lg">Trip not found</p>
         <p className="text-slate-500 text-sm mt-1">This shared link may have expired or is invalid.</p>
@@ -16,7 +16,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
           href="/"
           className="mt-6 text-indigo-600 font-medium text-sm hover:underline"
         >
-          ← Go to TripSync
+          ← Go to Voypack
         </Link>
       </div>
     )
@@ -30,7 +30,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
     : null
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 max-w-lg mx-auto">
       {/* Read-only banner */}
       <div className="bg-indigo-50 py-3 text-center">
         <p className="text-sm text-indigo-700">
@@ -57,7 +57,7 @@ export default async function SharePage({ params }: { params: Promise<{ id: stri
       {/* CTA box */}
       <div className="mx-4 mb-8 rounded-2xl bg-indigo-50 p-6 text-center">
         <p className="font-semibold text-slate-900 text-base">Want to plan your own trip?</p>
-        <p className="text-sm text-slate-500 mt-1">Create your free TripSync account</p>
+        <p className="text-sm text-slate-500 mt-1">Create your free Voypack account</p>
         <Link
           href="/auth"
           className="mt-4 inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-6 py-3 text-sm transition-colors min-h-[44px]"

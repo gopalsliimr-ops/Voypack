@@ -16,7 +16,7 @@ function SettlementInner({ id }: { id: string }) {
 
   if (!trip) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto flex flex-col items-center justify-center px-6 text-center">
         <p className="text-5xl mb-4">🗺</p>
         <p className="font-semibold text-slate-900 text-lg">Trip not found</p>
       </div>
@@ -39,7 +39,7 @@ function SettlementInner({ id }: { id: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 max-w-lg mx-auto">
       <Navbar backHref={`/trips/${id}/fairpot`} title="Settle Up" />
 
       <div className="px-4 py-6">

@@ -4,7 +4,6 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getTripById } from '@/lib/mock-data'
 import Navbar from '@/components/Navbar'
-import StageBar from '@/components/StageBar'
 import BudgetSlider from '@/components/BudgetSlider'
 
 function BudgetBlindInner({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +18,7 @@ function BudgetBlindInner({ params }: { params: Promise<{ id: string }> }) {
 
   if (!trip) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto flex flex-col items-center justify-center px-6 text-center">
         <p className="text-5xl mb-4">✈️</p>
         <p className="font-semibold text-slate-900 text-lg">Trip not found</p>
         <Link href="/dashboard" className="mt-4 text-indigo-600 text-sm hover:underline">
@@ -44,9 +43,8 @@ function BudgetBlindInner({ params }: { params: Promise<{ id: string }> }) {
   // ----------------------------------------------------------------
   if (view === 'member') {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto">
         <Navbar backHref={`/trips/${id}/tripulse`} title="BudgetBlind" />
-        <StageBar current={3} />
 
         <div className="px-4 py-6">
           <h1 className="text-xl font-bold text-slate-900">What&apos;s comfortable for you?</h1>
@@ -67,9 +65,8 @@ function BudgetBlindInner({ params }: { params: Promise<{ id: string }> }) {
   // ----------------------------------------------------------------
   if (revealed) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 max-w-lg mx-auto">
         <Navbar backHref={`/trips/${id}/tripulse`} title="BudgetBlind" />
-        <StageBar current={3} />
 
         <div className="px-4 py-6">
           {/* Success banner */}
@@ -133,7 +130,6 @@ function BudgetBlindInner({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar backHref={`/trips/${id}/tripulse`} title="BudgetBlind" />
-      <StageBar current={3} />
 
       <div className="px-4 py-6">
         <h1 className="text-xl font-bold text-slate-900">Budget Responses</h1>

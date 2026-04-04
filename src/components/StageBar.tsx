@@ -1,64 +1,61 @@
 interface StageBarProps {
-  current: 1 | 2 | 3 | 4
+  current: 1 | 2 | 3 | 4 | 5 | 6 | 7
 }
 
 const STAGES = [
-  { number: 1, label: 'Create' },
-  { number: 2, label: 'TripPulse' },
-  { number: 3, label: 'BudgetBlind' },
-  { number: 4, label: 'VibeMatcher' },
+  { number: 1, label: 'Create',   short: 'Create'  },
+  { number: 2, label: 'TripPulse', short: 'Pulse'  },
+  { number: 3, label: 'VibeMatcher', short: 'Vibe' },
+  { number: 4, label: 'BudgetBlind', short: 'Budget'},
+  { number: 5, label: 'TripBond',  short: 'Bond'   },
+  { number: 6, label: 'DayArch',   short: 'Plan'   },
+  { number: 7, label: 'FairPot',   short: 'Pay'    },
 ]
 
 export default function StageBar({ current }: StageBarProps) {
+  const stage = STAGES[current - 1]
+
   return (
-    <div className="bg-white border-b border-slate-100 px-4 py-3">
-      <div className="flex items-center">
-        {STAGES.map((stage, idx) => {
-          const isCompleted = stage.number < current
-          const isCurrent = stage.number === current
-          const isFuture = stage.number > current
+    <div className="bg-white border-b border-slate-100 px-4 pt-3 pb-2.5">
+      {/* Step label */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-indigo-600">{stage.label}</span>
+        <span className="text-xs text-slate-400">Step {current} of {STAGES.length}</span>
+      </div>
+
+      {/* Dot track */}
+      <div className="flex items-center gap-0">
+        {STAGES.map((s, idx) => {
+          const isCompleted = s.number < current
+          const isCurrent   = s.number === current
+          const isLast      = idx === STAGES.length - 1
 
           return (
-            <div key={stage.number} className="flex items-center flex-1 last:flex-none">
-              {/* Stage circle + label */}
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    isCompleted
-                      ? 'bg-indigo-600 text-white'
-                      : isCurrent
-                      ? 'border-2 border-indigo-600 text-indigo-600 bg-white'
-                      : 'bg-slate-200 text-slate-400'
-                  }`}
-                >
-                  {isCompleted ? (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    stage.number
-                  )}
-                </div>
-                <span
-                  className={`text-xs mt-1 whitespace-nowrap ${
-                    isCompleted
-                      ? 'text-indigo-600'
-                      : isCurrent
-                      ? 'text-indigo-600 font-semibold'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {stage.label}
-                </span>
+            <div key={s.number} className="flex items-center flex-1 last:flex-none">
+              {/* Dot */}
+              <div
+                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                  isCompleted
+                    ? 'bg-indigo-600'
+                    : isCurrent
+                    ? 'bg-indigo-600 ring-4 ring-indigo-100'
+                    : 'bg-slate-200'
+                }`}
+              >
+                {isCompleted ? (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <span className={`text-[9px] font-bold ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                    {s.number}
+                  </span>
+                )}
               </div>
 
-              {/* Connector line (not after last) */}
-              {idx < STAGES.length - 1 && (
-                <div
-                  className={`h-0.5 flex-1 mx-1 mb-4 ${
-                    stage.number < current ? 'bg-indigo-600' : 'bg-slate-200'
-                  }`}
-                />
+              {/* Connector line */}
+              {!isLast && (
+                <div className={`h-0.5 flex-1 mx-0.5 ${s.number < current ? 'bg-indigo-600' : 'bg-slate-200'}`} />
               )}
             </div>
           )

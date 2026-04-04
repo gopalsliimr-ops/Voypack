@@ -40,7 +40,7 @@ export default function CreateTripPage() {
   const labelClass = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2'
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 max-w-lg mx-auto">
       <Navbar backHref="/dashboard" title="New Trip" />
 
       <div className="px-4 py-6">
