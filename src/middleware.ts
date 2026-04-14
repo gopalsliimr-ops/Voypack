@@ -31,7 +31,13 @@ export async function middleware(request: NextRequest) {
   )
 
   // IMPORTANT: must call getUser() before any redirect logic
-  const { data: { user } } = await supabase.auth.getUser()
+  // Timeout after 1s to avoid MIDDLEWARE_INVOCATION_TIMEOUT on slow Supabase responses
+  const { data: { user } } = await Promise.race([
+    supabase.auth.getUser(),
+    new Promise<{ data: { user: null } }>(resolve =>
+      setTimeout(() => resolve({ data: { user: null } }), 1000)
+    ),
+  ])
   const { pathname } = request.nextUrl
 
   // Unauthenticated user hitting a protected route → send to sign-in
@@ -55,7 +61,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/dashboard/:path*', '/trips/:path*', '/auth/profile/:path*', '/auth'],
 }
